@@ -1,0 +1,29 @@
+<%--
+  Created by IntelliJ IDEA.
+  User: mdjes
+  Date: 5/03/26
+  Time: 7:10 p. m.
+  To change this template use File | Settings | File Templates.
+--%>
+<%@ page pageEncoding="utf-8" %>
+<nav class="main-nav">
+
+    <a class="logo" href="./index.jsp">
+        <img src="./imgs/nebula-03.svg" alt="Nebula Music">
+    </a>
+
+    <!-- Checkbox oculto -->
+    <input type="checkbox" id="menu-toggle">
+
+    <!-- Botón hamburguesa -->
+    <label for="menu-toggle" class="menu-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+    </label>
+
+    <!-- Menú -->
+    <ul class="nav-links">
+        <li><a href="../views/aplication/about.jsp">Nosotros</a></li>
+        <li><a href="../views/aplication/comunidad.jsp">Comunidad</a></li>
+        <li><a href="../../../views/auth/iniciar-sesion.jsp">Iniciar
