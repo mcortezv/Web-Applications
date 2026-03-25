@@ -20,9 +20,25 @@ public class AuthFilter implements Filter {
 
         HttpSession session = req.getSession(false);
 
+        String authHeader = req.getHeader("Authorization");
+        boolean tokenValido = false;
+
+        if (authHeader != null && authHeader.startWith("Barer ")){
+            String token = authHeader.substring(7);
+
+            try {
+                String correo = JWTUtil.validarToken(token);
+                req.setAttribute("usuario", correo);
+                tokenValido = true;
+            } catch (Exception e){
+                tokenValido = false;
+            }
+        }
+
         boolean loggedIn = session != null && session.getAttribute("usuario") != null;
 
-        boolean loginRequest = path.contains("iniciar-sesion.jsp") || path.equals("registro.jsp") || path.equals("autenticacion.jsp");
+        boolean loginRequest = path.contains("iniciar-sesion.jsp") || path.equals("registro.jsp") || path.equals("autenticacion.jsp")
+                || path.equals("/api/auth");
 
 
         boolean apiRequest = path.contains("/api/");
@@ -34,7 +50,30 @@ public class AuthFilter implements Filter {
         } else {
             res.sendRedirect(req.getContextPath() + "/views/auth/iniciar-sesion.jsp");
         }
+
+        boolean tyc = path.endsWith("tyc.jsp");
+
+        if (loginRequest || resourcesStaticRequest || tyc){
+            chain.doFilter(request, response);
+            return;
+        }
+
+        if (apiRequest){
+            if (!tokenValido){
+                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                res.getWriter().write("No Autorizado");
+                return;
+            }
+            chain.doFilter(request, response);
+            return;
+        }
+
+        if (loggedIn){
+            chain.doFilter(request, response);
+            return;
+        }
+
+    } else {
+        res.sendRedirect(req.getContextPath() + "/views/auth/iniciar-session.jsp");
     }
-
-
 }
