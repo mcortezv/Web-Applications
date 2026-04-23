@@ -19,8 +19,7 @@
             padding: 20px;
             border-radius: 3px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border-top: 4px solid #0052cc;
-            /* Color corporativo tipo Jira */
+
         }
 
         .input-group {
@@ -97,7 +96,7 @@
         <h3>Tablero de Jira</h3>
         <div class="input-group">
             <input type="text" id="taskInput" placeholder="Añadir una tarea..">
-            <button id="addBtn" class="btnAdd">Crear</button>
+            <button id="addBtn" class="btn-add">Crear</button>
 
         </div>
         <ul id="taskList" class="task-list"></ul>
@@ -106,11 +105,15 @@
     <script>
         let tasks = [];
 
-        const input = document.querySelector("input");
+        const input = document.getElementById("taskInput");
         const addBtn = document.getElementById("addBtn");
         const list = document.getElementById("taskList");
 
-        addBtn.onClick = addTask;
+        document.addEventListener("DOMContentLoaded", () => {
+            const saved = localStorage.getItem("tasks");
+            if (saved) tasks = JSON.parse(saved);
+            render();
+        });
 
         addBtn.addEventListener("click", addTask);
 
@@ -118,20 +121,75 @@
             if (e.key === "Enter") addTask();
         });
 
-        function addTask() {
-            let textInput = input.value.trim();
 
+        list.addEventListener("click", (e) => {
+            const li = e.target.closest("li");
+            if (!li) return;
+            const id = Number(li.dataset.id);
+            const btn = e.target.closest("button[data-action]");
+
+            if (btn && btn.dataset.action === "delete") {
+                li.parentNode.removeChild(li);
+                tasks = tasks.filter(t => t.id !== id);
+                save();
+            } else if (btn && btn.dataset.action === "edit") {
+                const span = li.querySelector("span");
+                const oldText = span.textContent;
+                const editInput = document.createElement("input");
+                editInput.type = "text";
+                editInput.value = oldText;
+                editInput.style.cssText = "flex:1;padding:2px 4px;border:1px solid #4c9aff;border-radius:2px;font-size:inherit;";
+                span.replaceWith(editInput);
+                editInput.focus();
+                editInput.select();
+
+                let done = false;
+                function commit() {
+                    if (done) return;
+                    done = true;
+                    const newText = editInput.value.trim() || oldText;
+                    const newSpan = document.createElement("span");
+                    newSpan.textContent = newText;
+                    editInput.replaceWith(newSpan);
+                    const task = tasks.find(t => t.id === id);
+                    if (task) { task.text = newText; save(); }
+                }
+                editInput.addEventListener("blur", commit);
+                editInput.addEventListener("keydown", (ev) => {
+                    ev.stopPropagation();
+                    if (ev.key === "Enter") editInput.blur();
+                    if (ev.key === "Escape") {
+                        done = true;
+                        const newSpan = document.createElement("span");
+                        newSpan.textContent = oldText;
+                        editInput.replaceWith(newSpan);
+                    }
+                });
+            } else if (e.target.tagName === "SPAN") {
+                const task = tasks.find(t => t.id === id);
+                task.complete = !task.complete;
+                li.classList.toggle("completed");
+                save();
+            }
+        });
+
+        function save() {
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+        }
+
+        function addTask() {
+            const textInput = input.value.trim();
             if (!textInput) return;
 
-            const newTaks = {
+            const newTask = {
                 id: Date.now(),
                 text: textInput,
                 complete: false
-            }
+            };
 
-            tasks.push(newTaks);
+            tasks.push(newTask);
+            save();
             input.value = "";
-
             render();
         }
 
@@ -139,25 +197,24 @@
             list.innerHTML = "";
             tasks.forEach(t => {
                 const li = document.createElement("li");
-                li.className = `task-item ${t.complete ? 'completed' : ''}`;
-
+                li.className = `task-item${t.complete ? " completed" : ""}`;
                 li.dataset.id = t.id;
 
                 const span = document.createElement("span");
-
                 span.textContent = t.text;
 
                 const actions = document.createElement("div");
-
                 actions.className = "actions";
 
                 const btnEdit = document.createElement("button");
                 btnEdit.className = "btn-edit";
-                btnEdit.textContent = "e"
+                btnEdit.textContent = "e";
+                btnEdit.dataset.action = "edit";
 
                 const btnDelete = document.createElement("button");
                 btnDelete.className = "btn-delete";
-                btnDelete.textContent = "x"
+                btnDelete.textContent = "x";
+                btnDelete.dataset.action = "delete";
 
                 actions.appendChild(btnEdit);
                 actions.appendChild(btnDelete);
@@ -166,7 +223,7 @@
                 li.appendChild(actions);
 
                 list.appendChild(li);
-            })
+            });
         }
     </script>
 </body>
