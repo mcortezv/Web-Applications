@@ -1,12 +1,14 @@
 import { cart, getCartTotal, removeFromCart, crearCart, getCartUnitCount, saveCart } from '../core/cart-state.js'
+import { sendCheckout } from '../services/api.js'
 
 const cartItemContainer = document.getElementById("cart-items-container");
-const summaryTotal = document.getElementById("summaryTotal");
-const summaryCount = document.getElementById("summaryCount");
+const summaryTotal = document.getElementById("summary-total");
+const summaryCount = document.getElementById("summary-count");
 const checkoutForm = document.getElementById("checkout-form-page");
 
 document.addEventListener("DOMContentLoaded", () => {
     renderCartPage();
+    setupCheckout();
 });
 
 function renderCartPage() {
@@ -17,6 +19,8 @@ function renderCartPage() {
                 <a href="index.html" class="btn-primary" style="text-decoration: none;">Ir a comprar</a>
             </div>
         `
+        summaryCount.textContent = 0;
+        summaryTotal.textContent = `$0.00`;
         return;
     }
 
@@ -39,7 +43,7 @@ function renderCartPage() {
                 </button>
             </div>
         </div>
-        `);
+        `).join("");
 
     cartItemContainer.querySelectorAll(".qty-btn").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -58,7 +62,9 @@ function renderCartPage() {
     })
 
     summaryCount.textContent = getCartUnitCount();
-    summaryTotal.textContent = `${}`
+    summaryTotal.textContent = `$${getCartTotal()}`;
+
+    lucide.createIcons();
 }
 
 function handleQuantityChange(id, isPlus) {
@@ -83,4 +89,25 @@ function handleRemove(id) {
         removeFromCart(id);
         renderCartPage();
     }
+}
+
+function setupCheckout() {
+    if (!checkoutForm) return;
+
+    checkoutForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        if (cart.length === 0) {
+            window.alert("Tu carrito está vacío.");
+            return;
+        }
+
+        await sendCheckout(cart);
+
+        window.alert("¡Compra realizada con éxito!");
+
+        crearCart();
+        renderCartPage();
+        checkoutForm.reset();
+    });
 }

@@ -5,7 +5,7 @@ let allProducts = [];
 
 const productsGrid = document.getElementById('products-grid');
 
-const searchInput = document.getElementById('products-search');
+const searchInput = document.getElementById('product-search');
 
 const cartCounter = document.getElementById("cart-counter");
 
@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     allProducts = await obtenerProductos();
     renderProducts(allProducts);
 
+    updateCartCounter();
     setupEventListeners();
 });
 
@@ -48,6 +49,9 @@ function renderProducts(products) {
             addToCart(product);
             updateCartCounter();
 
+            if (window.confirm("Producto agregado. ¿Quieres ir al carrito?")) {
+                window.location.href = "cart.html";
+            }
         })
     })
 }
